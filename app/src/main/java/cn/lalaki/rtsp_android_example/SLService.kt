@@ -194,8 +194,9 @@ class SLService : Service(), IRecordingEvent {
         val mainApp = mMainApp
         val rtspServer = mRtspServer
         if (mediaProjection != null && mainApp != null && rtspServer != null) {
+            val dpi = mainApp.resources.displayMetrics.densityDpi
             val avcVideoRecorder =
-                AVCVideoRecorder(mediaProjection, logView, mainApp.mWidth, mainApp.mHeight)
+                AVCVideoRecorder(mediaProjection, logView, mainApp.mWidth, mainApp.mHeight, dpi)
             mAACAudioRecorder = AACAudioRecorder(mainApp, mediaProjection, mBufferInfo, isMic)
             avcVideoRecorder.start(rtspServer, mAACAudioRecorder, mBufferInfo, mFloatView)
             mAVCVideoRecorder = avcVideoRecorder

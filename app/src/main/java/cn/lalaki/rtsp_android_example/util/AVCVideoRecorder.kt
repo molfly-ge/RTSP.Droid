@@ -20,7 +20,8 @@ open class AVCVideoRecorder(
     mMediaProjection: MediaProjection,
     var logView: TextView,
     width: Int,
-    height: Int
+    height: Int,
+    dpi: Int
 ) {
     private var mVirtualDisplay: VirtualDisplay? = null
     private var mSurface: Surface? = null
@@ -51,7 +52,7 @@ open class AVCVideoRecorder(
                 "vd-9",
                 width,
                 height,
-                1,
+                dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 surface,
                 null,
