@@ -31,21 +31,3 @@ jobs:
         with:
           name: rtsp-droid-debug
           path: app/build/outputs/apk/debug/*.apk
-
-      - name: Build release APK
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.KEYSTORE_BASE64 != ''
-        env:
-          MY_PRIVATE_EMAIL: ${{ secrets.KEY_ALIAS }}
-          mystorepass: ${{ secrets.STORE_PASSWORD }}
-          mystorepass2: ${{ secrets.KEY_PASSWORD }}
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/keystore.jks
-          sed -i 's|file("D:\\\\imoe.jks")|file("keystore.jks")|' app/build.gradle.kts
-          ./gradlew assembleRelease
-
-      - name: Upload release APK
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.KEYSTORE_BASE64 != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: rtsp-droid-release
-          path: app/build/outputs/apk/release/*.apk
