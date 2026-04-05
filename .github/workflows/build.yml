@@ -33,7 +33,7 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
 
       - name: Build release APK
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.KEYSTORE_BASE64 != ''
         env:
           MY_PRIVATE_EMAIL: ${{ secrets.KEY_ALIAS }}
           mystorepass: ${{ secrets.STORE_PASSWORD }}
@@ -44,7 +44,7 @@ jobs:
           ./gradlew assembleRelease
 
       - name: Upload release APK
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.KEYSTORE_BASE64 != ''
         uses: actions/upload-artifact@v4
         with:
           name: rtsp-droid-release
