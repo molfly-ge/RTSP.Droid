@@ -44,42 +44,6 @@
                 app:borderColor="@android:color/darker_gray"
                 app:borderCornerRadius="8dp"
                 app:borderStrokeWidth="2.2dp"
-                app:labelText="@string/audio_type"
-                app:labelTextColor="@android:color/black"
-                app:labelTextSize="15dp">
-
-                <RadioGroup
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp">
-
-                    <RadioButton
-                        android:id="@+id/audio_system"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="@string/audio_system"
-                        tools:ignore="TouchTargetSizeCheck" />
-
-                    <RadioButton
-                        android:id="@+id/audio_mic"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/audio_mic"
-                        tools:ignore="TouchTargetSizeCheck" />
-                </RadioGroup>
-
-            </ir.programmerplus.groupbox.GroupBoxLayout>
-
-            <ir.programmerplus.groupbox.GroupBoxLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:layoutDirection="ltr"
-                android:padding="5dp"
-                app:borderColor="@android:color/darker_gray"
-                app:borderCornerRadius="8dp"
-                app:borderStrokeWidth="2.2dp"
                 app:labelText="@string/video_pixel"
                 app:labelTextColor="@android:color/black"
                 app:labelTextSize="15dp">
@@ -129,7 +93,8 @@
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1">
+                        android:layout_weight="1"
+                        android:orientation="horizontal">
 
                         <info.hoang8f.widget.FButton
                             android:id="@+id/copy_btn"
@@ -137,6 +102,15 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="start"
                             android:text="@string/copy"
+                            android:textColor="@android:color/white"
+                            tools:ignore="TextContrastCheck" />
+
+                        <info.hoang8f.widget.FButton
+                            android:id="@+id/switch_camera"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="5dp"
+                            android:text="@string/switch_camera"
                             android:textColor="@android:color/white"
                             tools:ignore="TextContrastCheck" />
                     </LinearLayout>

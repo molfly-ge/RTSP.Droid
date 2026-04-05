@@ -1,30 +1,24 @@
 <resources>
     <string name="app_name">RTSP.Droid</string>
     <string name="channel_id">RTSP_Stream_Notify</string>
-    <string name="granting">请授予屏幕录制权限</string>
-    <string name="stopped">已停止运行</string>
-    <string name="opensource">获取源代码</string>
+    <string name="granting">Please grant camera permission</string>
+    <string name="stopped">Stopped</string>
+    <string name="opensource">Source code</string>
     <string name="project_url">https://github.com/lalakii/RTSP.Droid</string>
     <string name="issues_url">https://github.com/lalakii/RTSP.Droid/issues</string>
-    <string name="switch_text">启动服务</string>
-    <string name="switch_text_stop">停止服务</string>
-    <string name="confirm">去设置</string>
-    <string name="tips_title">小贴士</string>
-    <string name="cancel">暂时不要</string>
-    <string name="audio_type">选择一个音频源</string>
-    <string name="audio_system">系统内部</string>
-    <string name="audio_mic">麦克风</string>
-    <string name="logs">日志输出</string>
-    <string name="copy">复制流地址</string>
-    <string name="float_title">请授予悬浮窗权限</string>
-    <string name="copy_ok">已复制</string>
-    <string name="report">报告BUG</string>
-    <string name="publish">发布流</string>
-    <string name="clear">清空日志</string>
-    <string name="video_pixel">选择一个分辨率(取决于设备是否兼容)</string>
-    <string name="force_exit">结束进程</string>
-    <string name="tips">你可以使用VLC、MXPlayer播放器或者ffmpeg里面的ffplay命令来播放RTSP流。\n修改分辨率或音频源后，重新启动服务才会生效。\n\nby lalaki.cn</string>
-    <string name="float_permission">为了应用更好的运行，建议前往设置App授予悬浮窗权限。\n\n此权限不是必须的，不授予与此权限，应用依然能运行。</string>
+    <string name="switch_text">Start</string>
+    <string name="switch_text_stop">Stop</string>
+    <string name="tips_title">Tips</string>
+    <string name="logs">Log output</string>
+    <string name="copy">Copy URL</string>
+    <string name="copy_ok">Copied</string>
+    <string name="report">Report bug</string>
+    <string name="publish">Stream</string>
+    <string name="clear">Clear log</string>
+    <string name="video_pixel">Resolution (depends on device)</string>
+    <string name="force_exit">Force exit</string>
+    <string name="switch_camera">Switch camera</string>
+    <string name="tips">Use VLC, MXPlayer or ffplay to play the RTSP stream.\nRestart the service after changing resolution.\n\nby lalaki.cn</string>
 
     <style name="Custom" parent="@style/Theme.AppCompat.Light">
         <item name="actionMenuTextColor">@android:color/holo_green_dark</item>
@@ -37,19 +31,11 @@
     <color name="blue">#0000EE</color>
 
     <string-array name="pixels">
-        <item>1920x1080</item>
+        <item>1280x720</item>
         <item>640x480</item>
         <item>800x600</item>
         <item>1024x768</item>
-        <item>1280x720</item>
         <item>1280x800</item>
-        <item>1280x1024</item>
-        <item>1366x768</item>
-        <item>1440x900</item>
-        <item>1600x900</item>
-        <item>1680x1050</item>
-        <item>1920x1200</item>
-        <item>2560x1440</item>
+        <item>1920x1080</item>
     </string-array>
 </resources>
-
