@@ -59,7 +59,7 @@ class SLService : Service(), IRecordingEvent {
         if (mRtspServer == null) {
             mMainApp?.let {
                 mRtspServer = RtspServer(it, USE_PORT)
-                mRtspServer?.setLogs(false)
+                mRtspServer?.setLogs(true)
                 mRtspServer?.setAudioInfo(AACAudioRecorder.SAMPLE_RATE, false)
                 mRtspServer?.setAuth("", "")
                 mRtspServer?.startServer()

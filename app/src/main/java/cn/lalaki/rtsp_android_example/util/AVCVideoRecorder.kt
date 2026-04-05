@@ -52,7 +52,7 @@ open class AVCVideoRecorder(
                 width,
                 height,
                 1,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 surface,
                 null,
                 null
