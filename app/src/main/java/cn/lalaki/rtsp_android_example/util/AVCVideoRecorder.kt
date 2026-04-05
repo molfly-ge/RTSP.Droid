@@ -117,7 +117,7 @@ open class AVCVideoRecorder(
                     while (mRunning) {
                         val timestamp = (System.nanoTime() - beginTime) / 1000L
                         aacAudioRecorder?.sendAacBuffer(rtspServer, timestamp)
-                        val avcOutputBufferIndex = avcEncoder.dequeueOutputBuffer(bufferInfo, 0)
+                        val avcOutputBufferIndex = avcEncoder.dequeueOutputBuffer(bufferInfo, 10000)
                         if (avcOutputBufferIndex < 0) {
                             floatView?.postInvalidate()
                             continue
