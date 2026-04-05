@@ -48,7 +48,7 @@ class AACAudioRecorder(
                 .build()
             mAudioRecord = audioRecord
             val audioFormat = MediaFormat.createAudioFormat(
-                MediaFormat.MIMETYPE_AUDIO_AAC, SAMPLE_RATE, channelConfig
+                MediaFormat.MIMETYPE_AUDIO_AAC, SAMPLE_RATE, 1
             )
             audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 4096)
             audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, SAMPLE_RATE)

@@ -8,23 +8,27 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.params.OutputConfiguration
+import android.hardware.camera2.params.SessionConfiguration
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Size
 import android.view.Surface
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import com.pedro.rtspserver.RtspServer
 import java.nio.ByteBuffer
+import java.util.concurrent.Executor
 import kotlin.concurrent.thread
 
 class CameraVideoRecorder(
     private val context: Context,
     private val logView: TextView,
-    private val width: Int,
-    private val height: Int,
+    private val requestedWidth: Int,
+    private val requestedHeight: Int,
     private var useFrontCamera: Boolean
 ) {
     private var mAvcEncoder: MediaCodec? = null
@@ -33,6 +37,9 @@ class CameraVideoRecorder(
     private var mCaptureSession: CameraCaptureSession? = null
     private var mCameraThread: HandlerThread? = null
     private var mCameraHandler: Handler? = null
+    private var mVideoInfoSet = false
+    private var mActualWidth = requestedWidth
+    private var mActualHeight = requestedHeight
     var mRunning = false
 
     fun start(
@@ -43,7 +50,22 @@ class CameraVideoRecorder(
         mCameraThread = HandlerThread("CameraThread").also { it.start() }
         mCameraHandler = Handler(mCameraThread!!.looper)
 
-        val videoFormat = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height)
+        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val cameraId = findCameraId(cameraManager)
+        if (cameraId == null) {
+            logView.post { logView.append("No camera found\n") }
+            cleanup()
+            return
+        }
+
+        val bestSize = findBestSize(cameraManager, cameraId)
+        mActualWidth = bestSize.width
+        mActualHeight = bestSize.height
+        logView.post { logView.append("Resolution: ${mActualWidth}x${mActualHeight}\n") }
+
+        val videoFormat = MediaFormat.createVideoFormat(
+            MediaFormat.MIMETYPE_VIDEO_AVC, mActualWidth, mActualHeight
+        )
         videoFormat.setInteger(MediaFormat.KEY_BIT_RATE, 4_000_000)
         videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30)
         videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
@@ -60,32 +82,41 @@ class CameraVideoRecorder(
             encoder.configure(videoFormat, null, MediaCodec.CONFIGURE_FLAG_ENCODE, null)
             mEncoderSurface = encoder.createInputSurface()
             encoder.start()
-            logView.post { logView.append("Encoder started: ${width}x${height}\n") }
+            logView.post { logView.append("Encoder started\n") }
         } catch (e: Exception) {
             logView.post { logView.append("Encoder error: ${e.localizedMessage}\n") }
+            cleanup()
             return
         }
 
-        openCamera {
+        openCamera(cameraId) {
             startEncoderLoop(rtspServer, aacAudioRecorder, bufferInfo)
         }
     }
 
-    private fun openCamera(onReady: () -> Unit) {
-        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        val cameraId = findCameraId(cameraManager)
-        if (cameraId == null) {
-            logView.post { logView.append("No camera found\n") }
-            return
-        }
+    private fun findBestSize(cameraManager: CameraManager, cameraId: String): Size {
+        val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+        val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        val sizes = map?.getOutputSizes(MediaCodec::class.java) ?: return Size(requestedWidth, requestedHeight)
+
+        val target = requestedWidth.toLong() * requestedHeight
+        return sizes.minByOrNull { size ->
+            val pixels = size.width.toLong() * size.height
+            kotlin.math.abs(pixels - target)
+        } ?: Size(requestedWidth, requestedHeight)
+    }
+
+    private fun openCamera(cameraId: String, onReady: () -> Unit) {
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED
         ) {
             logView.post { logView.append("Camera permission not granted\n") }
+            cleanup()
             return
         }
 
         logView.post { logView.append("Opening camera: $cameraId\n") }
+        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
@@ -97,11 +128,13 @@ class CameraVideoRecorder(
             override fun onDisconnected(camera: CameraDevice) {
                 logView.post { logView.append("Camera disconnected\n") }
                 camera.close()
+                cleanup()
             }
 
             override fun onError(camera: CameraDevice, error: Int) {
                 logView.post { logView.append("Camera error: $error\n") }
                 camera.close()
+                cleanup()
             }
         }, mCameraHandler)
     }
@@ -123,8 +156,13 @@ class CameraVideoRecorder(
 
     private fun createCaptureSession(camera: CameraDevice, onReady: () -> Unit) {
         val surface = mEncoderSurface ?: return
-        camera.createCaptureSession(
-            listOf(surface),
+        val handler = mCameraHandler ?: return
+
+        val outputConfig = OutputConfiguration(surface)
+        val sessionConfig = SessionConfiguration(
+            SessionConfiguration.SESSION_REGULAR,
+            listOf(outputConfig),
+            Executor { handler.post(it) },
             object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     mCaptureSession = session
@@ -132,43 +170,30 @@ class CameraVideoRecorder(
                         addTarget(surface)
                         set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
                     }.build()
-                    session.setRepeatingRequest(request, null, mCameraHandler)
+                    session.setRepeatingRequest(request, null, handler)
                     logView.post { logView.append("Camera streaming started\n") }
                     onReady()
                 }
 
                 override fun onConfigureFailed(session: CameraCaptureSession) {
                     logView.post { logView.append("Camera session config failed\n") }
+                    cleanup()
                 }
-            },
-            mCameraHandler
+            }
         )
+        camera.createCaptureSession(sessionConfig)
     }
 
-    private fun csd0Handler(data: ByteArray, rtspServer: RtspServer) {
-        var spsPosition = -1
-        var ppsPosition = -1
-        var i = 0
-        while (i < data.size - 3) {
-            if (data[i] == 0.toByte() && data[i + 1] == 0.toByte() &&
-                data[i + 2] == 0.toByte() && data[i + 3] == 1.toByte()
-            ) {
-                if (spsPosition == -1) {
-                    spsPosition = i
-                } else if (ppsPosition == -1) {
-                    ppsPosition = i
-                }
-                i += 4
-            } else {
-                i++
-            }
-        }
-        if (spsPosition >= 0 && ppsPosition > spsPosition) {
-            val spsSize = ppsPosition - spsPosition
-            val sps = ByteBuffer.allocate(spsSize).put(data, spsPosition, spsSize)
-            val ppsSize = data.size - ppsPosition
-            val pps = ByteBuffer.allocate(ppsSize).put(data, ppsPosition, ppsSize)
+    private fun extractVideoInfo(encoder: MediaCodec, rtspServer: RtspServer) {
+        if (mVideoInfoSet) return
+        val format = encoder.outputFormat
+        val sps = format.getByteBuffer("csd-0")
+        val pps = format.getByteBuffer("csd-1")
+        if (sps != null && pps != null) {
+            sps.position(0)
+            pps.position(0)
             rtspServer.setVideoInfo(sps, pps, null)
+            mVideoInfoSet = true
             logView.post { logView.append("Video info set (SPS/PPS)\n") }
         }
     }
@@ -187,12 +212,17 @@ class CameraVideoRecorder(
                     val timestamp = (System.nanoTime() - beginTime) / 1000L
                     aacAudioRecorder?.sendAacBuffer(rtspServer, timestamp)
                     val index = encoder.dequeueOutputBuffer(bufferInfo, 10000)
+                    if (index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                        extractVideoInfo(encoder, rtspServer)
+                        continue
+                    }
                     if (index < 0) continue
-                    if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
-                        val formatBuffer = encoder.getOutputFormat(index).getByteBuffer("csd-0")
-                        if (formatBuffer != null) {
-                            csd0Handler(formatBuffer.array(), rtspServer)
-                        }
+                    if (!mVideoInfoSet && (bufferInfo.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0) {
+                        extractVideoInfo(encoder, rtspServer)
+                    }
+                    if ((bufferInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+                        encoder.releaseOutputBuffer(index, false)
+                        continue
                     }
                     val outputBuffer = encoder.getOutputBuffer(index)
                     if (outputBuffer != null) {
@@ -219,7 +249,15 @@ class CameraVideoRecorder(
         mEncoderSurface?.release()
         mCameraThread?.quitSafely()
         mRunning = false
+        mVideoInfoSet = false
         logView.post { logView.append("Camera recorder released\n") }
+    }
+
+    private fun cleanup() {
+        mCameraThread?.quitSafely()
+        mEncoderSurface?.release()
+        try { mAvcEncoder?.release() } catch (_: Exception) {}
+        mRunning = false
     }
 
     fun release() {

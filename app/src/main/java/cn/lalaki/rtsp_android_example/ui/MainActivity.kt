@@ -110,8 +110,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
             getText(if (isChecked) R.string.switch_text_stop else R.string.switch_text)
         if (isChecked) {
             val pixelArray = mBinding.pixel.selectedItem.toString().split("x")
-            mMainApp.mHeight = pixelArray[0].toInt()
-            mMainApp.mWidth = pixelArray[1].toInt()
+            mMainApp.mWidth = pixelArray[0].toInt()
+            mMainApp.mHeight = pixelArray[1].toInt()
 
             if (!mServiceBound) {
                 bindService(
