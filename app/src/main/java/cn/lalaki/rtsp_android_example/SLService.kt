@@ -30,7 +30,7 @@ import com.pedro.rtspserver.RtspServer
 import cn.lalaki.rtsp_android_example.binder.SLBinder
 import cn.lalaki.rtsp_android_example.ui.MainActivity
 import cn.lalaki.rtsp_android_example.util.AACAudioRecorder
-import cn.lalaki.rtsp_android_example.util.HEVCVideoRecorder
+import cn.lalaki.rtsp_android_example.util.AVCVideoRecorder
 
 /**
  * @author lalakii    -     i@lalaki.cn
@@ -45,7 +45,7 @@ class SLService : Service(), IRecordingEvent {
     private var mWindowManager: WindowManager? = null
     private var mRtspUrlView: TextView? = null
     private var mAACAudioRecorder: AACAudioRecorder? = null
-    private var mHEVCVideoRecorder: HEVCVideoRecorder? = null
+    private var mAVCVideoRecorder: AVCVideoRecorder? = null
     private var mMainApp: MainApp? = null
     private var mNotificationManager: NotificationManager? = null
     var mIsMic = false
@@ -101,7 +101,7 @@ class SLService : Service(), IRecordingEvent {
     }
 
     override fun running(): Boolean {
-        return mHEVCVideoRecorder?.mRunning == true
+        return mAVCVideoRecorder?.mRunning == true
     }
 
     override fun onRestore() {
@@ -194,16 +194,16 @@ class SLService : Service(), IRecordingEvent {
         val mainApp = mMainApp
         val rtspServer = mRtspServer
         if (mediaProjection != null && mainApp != null && rtspServer != null) {
-            val hevcVideoRecorder =
-                HEVCVideoRecorder(mediaProjection, logView, mainApp.mWidth, mainApp.mHeight)
+            val avcVideoRecorder =
+                AVCVideoRecorder(mediaProjection, logView, mainApp.mWidth, mainApp.mHeight)
             mAACAudioRecorder = AACAudioRecorder(mainApp, mediaProjection, mBufferInfo, isMic)
-            hevcVideoRecorder.start(rtspServer, mAACAudioRecorder, mBufferInfo, mFloatView)
-            mHEVCVideoRecorder = hevcVideoRecorder
+            avcVideoRecorder.start(rtspServer, mAACAudioRecorder, mBufferInfo, mFloatView)
+            mAVCVideoRecorder = avcVideoRecorder
         }
     }
 
     override fun onRelease() {
-        mHEVCVideoRecorder?.release()
+        mAVCVideoRecorder?.release()
         mAACAudioRecorder?.release()
         mMediaProjection?.stop()
         val floatView = mFloatView
